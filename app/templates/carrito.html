@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2 class="page-title">Tu Carrito</h2>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div id="popup" class="popup">
+            {% for category, message in messages %}
+                <div class="popup-content popup-{{ category }}">
+                    <span class="popup-message">{{ message }}</span>
+                    <button class="popup-close" onclick="document.getElementById('popup').style.display='none';">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            setTimeout(() => {
+                const popup = document.getElementById('popup');
+                if (popup) popup.style.display = 'none';
+            }, 4000);
+        </script>
+    {% endif %}
+    {% endwith %}
+
+    {% if productos %}
+        <div class="cart-content">
+            <div class="table-container">
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in productos %}
+                        <tr>
+                            <td class="product-name">{{ item.producto.nombre }}</td>
+                            <td class="price">${{ item.producto.precio }}</td>
+                            <td class="quantity">{{ item.cantidad }}</td>
+                            <td class="subtotal">${{ item.subtotal }}</td>
+                            <td>
+                                <form action="{{ url_for('admin.eliminar_del_carrito', producto_id=item.producto.id) }}" method="POST">
+                                    <button type="submit" class="btn-danger btn-small">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="cart-summary">
+                <h3 class="total-amount">Total: ${{ total }}</h3>
+                <form action="{{ url_for('admin.confirmar_compra') }}" method="POST" class="checkout-form">
+                    <button type="submit" class="btn-primary btn-large">Confirmar Compra</button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-cart">
+            <p class="empty-message">El carrito está vacío</p>
+            <a href="#" class="btn-secondary">Continuar Comprando</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

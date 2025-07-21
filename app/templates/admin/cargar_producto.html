@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2 class="page-title">Cargar Producto</h2>
+        <p class="page-subtitle">Añade un nuevo producto al catálogo</p>
+    </div>
+
+    <div class="form-container">
+        <form action="{{ url_for('admin.cargar_producto') }}" method="POST" enctype="multipart/form-data" class="product-form">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label class="input-label" for="nombre">Nombre del Producto</label>
+                    <input type="text" name="nombre" id="nombre" class="input-field" required>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="precio">Precio</label>
+                    <input type="number" name="precio" id="precio" step="0.01" class="input-field" required>
+                </div>
+
+                <div class="input-group full-width">
+                    <label class="input-label" for="descripcion">Descripción</label>
+                    <textarea name="descripcion" id="descripcion" class="input-field textarea" rows="3" required></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="stock">Stock</label>
+                    <input type="number" name="stock" id="stock" class="input-field" required>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="imagen">Imagen del Producto</label>
+                    <input type="file" name="imagen" id="imagen" accept="image/*" class="input-file" required>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary btn-large">Cargar Producto</button>
+            </div>
+        </form>
+
+        {% if current_user.is_authenticated %}
+            <div class="logout-section">
+                <form action="{{ url_for('auth.logout') }}" method="get">
+                    <button type="submit" class="btn-secondary">Cerrar Sesión</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div id="popup" class="popup">
+            {% for category, message in messages %}
+                <div class="popup-content popup-{{ category }}">
+                    <span class="popup-message">{{ message }}</span>
+                    <button class="popup-close" onclick="document.getElementById('popup').style.display='none';">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            setTimeout(() => {
+                const popup = document.getElementById('popup');
+                if (popup) popup.style.display = 'none';
+            }, 4000);
+        </script>
+    {% endif %}
+    {% endwith %}
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+<!-- app/templates/index.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2 class="page-title">Productos Disponibles</h2>
+        <p class="page-subtitle">Descubre nuestra selección de productos</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div id="popup" class="popup">
+            {% for category, message in messages %}
+                <div class="popup-content popup-{{ category }}">
+                    <span class="popup-message">{{ message }}</span>
+                    <button class="popup-close" onclick="document.getElementById('popup').style.display='none';">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            setTimeout(() => {
+                const popup = document.getElementById('popup');
+                if (popup) popup.style.display = 'none';
+            }, 4000);
+        </script>
+    {% endif %}
+    {% endwith %}
+
+    <div class="productos-grid">
+        {% for producto in productos %}
+            <div class="producto-card">
+                <a href="{{ url_for('admin.detalle_producto', id=producto.id) }}" class="producto-link">
+                    <div class="producto-imagen">
+                        <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="producto-img">
+                    </div>
+                    <div class="producto-info">
+                        <h3 class="producto-nombre">{{ producto.nombre }}</h3>
+                        <p class="producto-descripcion">{{ producto.descripcion }}</p>
+                        <div class="producto-precio">${{ producto.precio }}</div>
+                    </div>
+                </a>
+                <form action="{{ url_for('admin.agregar_al_carrito', producto_id=producto.id) }}" method="POST" class="producto-form">
+                    <button type="submit" class="btn-primary btn-full">Agregar al Carrito</button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

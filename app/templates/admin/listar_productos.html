@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2 class="page-title">Gestión de Productos</h2>
+        <p class="page-subtitle">Administra tu inventario</p>
+    </div>
+
+    <div class="search-section">
+        <div class="search-container">
+            <input type="text" id="busqueda" placeholder="Buscar productos..." class="search-input">
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="tabla-productos" class="admin-table">
+            <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in productos %}
+                <tr>
+                    <td class="image-cell">
+                        <img src="{{ p.imagen_url }}" alt="{{ p.nombre }}" class="table-image">
+                    </td>
+                    <td class="product-name">{{ p.nombre }}</td>
+                    <td class="product-description">{{ p.descripcion }}</td>
+                    <td class="price">${{ p.precio }}</td>
+                    <td class="stock">{{ p.stock }}</td>
+                    <td class="actions-cell">
+                        <div class="action-buttons">
+                            <a href="{{ url_for('admin.editar_producto', id=p.id) }}" class="btn-edit">Editar</a>
+                            <form action="{{ url_for('admin.eliminar_producto', id=p.id) }}" method="POST" class="delete-form">
+                                <button type="submit" class="btn-delete" onclick="return confirm('¿Estás seguro de eliminar este producto?')">Eliminar</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if current_user.is_authenticated %}
+        <div class="logout-section">
+            <form action="{{ url_for('auth.logout') }}" method="get">
+                <button type="submit" class="btn-secondary">Cerrar Sesión</button>
+            </form>
+        </div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div id="popup" class="popup">
+            {% for category, message in messages %}
+                <div class="popup-content popup-{{ category }}">
+                    <span class="popup-message">{{ message }}</span>
+                    <button class="popup-close" onclick="document.getElementById('popup').style.display='none';">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            setTimeout(() => {
+                const popup = document.getElementById('popup');
+                if (popup) popup.style.display = 'none';
+            }, 4000);
+        </script>
+    {% endif %}
+    {% endwith %}
+</div>
+
+<script>
+    document.getElementById("busqueda").addEventListener("keyup", function () {
+        let input = this.value.toLowerCase();
+        let filas = document.querySelectorAll("#tabla-productos tbody tr");
+        
+        filas.forEach(fila => {
+            let textoFila = fila.innerText.toLowerCase();
+            fila.style.display = textoFila.includes(input) ? "" : "none";
+        });
+    });
+</script>
+{% endblock %}

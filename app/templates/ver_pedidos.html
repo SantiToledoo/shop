@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h2 class="page-title">Gestión de Pedidos</h2>
+        <p class="page-subtitle">Administra y controla todos los pedidos de la tienda</p>
+    </div>
+
+    {% if pedidos %}
+        <div class="orders-stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ pedidos|selectattr('estado', 'equalto', 'pendiente')|list|length }}</div>
+                <div class="stat-label">Pendientes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ pedidos|selectattr('estado', 'equalto', 'Entregado')|list|length }}</div>
+                <div class="stat-label">Entregados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ pedidos|selectattr('estado', 'equalto', 'Rechazado')|list|length }}</div>
+                <div class="stat-label">Rechazados</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Productos</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr class="order-row" data-status="{{ pedido.estado.lower() }}">
+                        <td class="order-id">#{{ pedido.id }}</td>
+                        <td class="order-date">
+                            <div class="date-main">{{ pedido.fecha.strftime('%d/%m/%Y') }}</div>
+                            <div class="date-time">{{ pedido.fecha.strftime('%H:%M') }}</div>
+                        </td>
+                        <td class="order-status">
+                            <span class="status-badge status-{{ pedido.estado.lower() }}">
+                                {{ pedido.estado }}
+                            </span>
+                        </td>
+                        <td class="order-products">
+                            <div class="products-list">
+                                {% for item in pedido.items %}
+                                <div class="product-item">
+                                    <span class="product-name">{{ item.producto.nombre }}</span>
+                                    <span class="product-quantity">x{{ item.cantidad }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="order-total">${{ pedido.total }}</td>
+                        <td class="order-actions">
+                            {% if pedido.estado == 'pendiente' %}
+                                <div class="action-buttons">
+                                    <form action="{{ url_for('admin.marcar_entregado', pedido_id=pedido.id) }}" method="post" class="action-form">
+                                        <button type="submit" class="btn-success btn-small" onclick="return confirm('¿Marcar como entregado?')">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="20,6 9,17 4,12"/>
+                                            </svg>
+                                            Entregar
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('admin.marcar_rechazado', pedido_id=pedido.id) }}" method="post" class="action-form">
+                                        <button type="submit" class="btn-danger btn-small" onclick="return confirm('¿Rechazar este pedido?')">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                                <line x1="6" y1="6" x2="18" y2="18"/>
+                                            </svg>
+                                            Rechazar
+                                        </button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <div class="status-final">
+                                    {% if pedido.estado == 'Entregado' %}
+                                        <span class="final-status delivered">✓ Entregado</span>
+                                    {% else %}
+                                        <span class="final-status rejected">✗ Rechazado</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-orders">
+            <div class="empty-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <h3 class="empty-title">No hay pedidos</h3>
+            <p class="empty-message">Aún no se han realizado pedidos en la tienda</p>
+            <a href="{{ url_for('admin.index') }}" class="btn-secondary">Ver Productos</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
