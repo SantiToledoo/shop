@@ -56,11 +56,12 @@
                 </table>
             </div>
 
-            <div class="cart-summary">
+           <div class="cart-summary">
                 <h3 class="total-amount">Total: ${{ total }}</h3>
-                <form action="{{ url_for('admin.confirmar_compra') }}" method="POST" class="checkout-form">
-                    <button type="submit" class="btn-primary btn-large">Confirmar Compra</button>
-                </form>
+                    <form action="{{ url_for('admin.confirmar_compra') }}" method="POST" class="checkout-form">
+                        <input type="hidden" name="total" value="{{ total }}">
+                        <button type="submit" class="btn-primary btn-large">Confirmar Compra</button>
+                    </form>
             </div>
         </div>
     {% else %}

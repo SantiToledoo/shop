@@ -166,21 +166,19 @@ def confirmar_compra():
     from app import db
 
     carrito = session.get('carrito', {})
-
     if not carrito:
         flash("El carrito está vacío.", "error")
         return redirect(url_for('admin.ver_carrito'))
 
-    # Permitir compras públicas
     usuario_id = current_user.id if current_user.is_authenticated else None
-    nuevo_pedido = Pedido(usuario_id=usuario_id)
+    nuevo_pedido = Pedido(usuario_id=usuario_id, total=0)
     db.session.add(nuevo_pedido)
-    db.session.flush()  # Asigna un ID al pedido sin hacer commit
+    db.session.flush()  # Para obtener el ID
+
+    total_pedido = 0
 
     for producto_id_str, cantidad in carrito.items():
-        producto_id = int(producto_id_str)
-        producto = Producto.query.get(producto_id)
-
+        producto = Producto.query.get(int(producto_id_str))
         if not producto:
             flash("Producto no encontrado.", "error")
             return redirect(url_for('admin.ver_carrito'))
@@ -190,6 +188,8 @@ def confirmar_compra():
             return redirect(url_for('admin.ver_carrito'))
 
         producto.stock -= cantidad
+        subtotal = producto.precio * cantidad
+        total_pedido += subtotal
 
         item = ItemPedido(
             pedido_id=nuevo_pedido.id,
@@ -198,10 +198,15 @@ def confirmar_compra():
         )
         db.session.add(item)
 
+    nuevo_pedido.total = total_pedido  # Guardás el total en el Pedido
+
     db.session.commit()
     session['carrito'] = {}
     flash("¡Pedido realizado con éxito!", "success")
     return redirect(url_for('main.index'))
+
+
+
 
 
 
