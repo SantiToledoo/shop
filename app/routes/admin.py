@@ -231,11 +231,22 @@ def marcar_entregado(pedido_id):
     db.session.commit()
     return redirect(url_for('admin.ver_pedidos'))
 
+
 @admin.route('/admin/pedidos/<int:pedido_id>/rechazar', methods=['POST'])
 @login_required
 def marcar_rechazado(pedido_id):
     from app import db
+
     pedido = Pedido.query.get_or_404(pedido_id)
+
+    # Restaurar el stock de cada producto
+    for item in pedido.items:
+        producto = Producto.query.get(item.producto_id)
+        if producto:
+            producto.stock += item.cantidad
+
     pedido.estado = 'Rechazado'
     db.session.commit()
+
+    flash("Pedido rechazado y stock restaurado correctamente.", "success")
     return redirect(url_for('admin.ver_pedidos'))
