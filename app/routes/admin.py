@@ -206,10 +206,6 @@ def confirmar_compra():
     return redirect(url_for('main.index'))
 
 
-
-
-
-
 @admin.route('/producto/<int:id>')
 def detalle_producto(id):
     producto = Producto.query.get_or_404(id)
