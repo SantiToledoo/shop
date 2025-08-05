@@ -3,3 +3,4 @@ Flask-SQLAlchemy
 Flask-Login
 python-dotenv
 flask_bcrypt
+gunicorn==21.2.0
