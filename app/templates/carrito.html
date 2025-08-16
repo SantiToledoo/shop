@@ -33,6 +33,8 @@
                         <tr>
                             <th>Producto</th>
                             <th>Precio</th>
+                            <th>Talle</th>
+                            <th>Color</th>
                             <th>Cantidad</th>
                             <th>Subtotal</th>
                             <th>Acciones</th>
@@ -43,10 +45,12 @@
                         <tr>
                             <td class="product-name">{{ item.producto.nombre }}</td>
                             <td class="price">${{ item.producto.precio }}</td>
+                            <td class="size">{{ item.talle }}</td>
+                            <td class="color">{{ item.color }}</td>
                             <td class="quantity">{{ item.cantidad }}</td>
                             <td class="subtotal">${{ item.subtotal }}</td>
                             <td>
-                                <form action="{{ url_for('admin.eliminar_del_carrito', producto_id=item.producto.id) }}" method="POST">
+                                <form action="{{ url_for('admin.eliminar_del_carrito', producto_id=item.producto.id, idx=item.variante_index) }}" method="POST">
                                     <button type="submit" class="btn-danger btn-small">Eliminar</button>
                                 </form>
                             </td>

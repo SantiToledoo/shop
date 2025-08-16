@@ -8,6 +8,7 @@ from flask_login import login_required, current_user
 from app.models.producto import Producto
 from app.models.pedidos import Pedido
 from app.models.item_pedido import ItemPedido
+from app.models.productovariante import ProductoVariante
 
 
 admin = Blueprint('admin', __name__)
@@ -27,10 +28,13 @@ def cargar_producto():
         stock = request.form['stock']
         imagen = request.files['imagen']
 
+        talle = request.form.get('talle') or None
+        color = request.form.get('color') or None
+
         if not nombre or not descripcion or not precio or not stock or not imagen:
-            flash('Todos los campos son obligatorios.', 'error')
+            flash('Todos los campos obligatorios deben completarse.', 'error')
             return redirect(url_for('admin.cargar_producto'))
-        
+
         try:
             precio = float(precio)
             if precio <= 0:
@@ -52,8 +56,10 @@ def cargar_producto():
         filename = secure_filename(imagen.filename)
         imagen_path = os.path.join(UPLOAD_FOLDER, filename)
         imagen.save(imagen_path)
-
         imagen_url = f'/static/img/{filename}'
+
+        usa_talle = 'usa_talle' in request.form
+        usa_color = 'usa_color' in request.form
 
         nuevo_producto = Producto(
             nombre=nombre,
@@ -62,13 +68,29 @@ def cargar_producto():
             imagen_url=imagen_url,
             stock=int(stock)
         )
-
         db.session.add(nuevo_producto)
+        db.session.commit()
+
+        # Guardar talles
+        if 'usa_talle' in request.form:
+            talles = request.form.getlist('talles[]')
+            for talle in talles:
+                if talle.strip():
+                    db.session.add(ProductoVariante(producto_id=nuevo_producto.id, tipo="talle", valor=talle.strip()))
+
+        # Guardar colores
+        if 'usa_color' in request.form:
+            colores = request.form.getlist('colores[]')
+            for color in colores:
+                if color.strip():
+                    db.session.add(ProductoVariante(producto_id=nuevo_producto.id, tipo="color", valor=color.strip()))
+
         db.session.commit()
         flash('Producto creado con éxito.', 'success')
         return redirect(url_for('admin.listar_productos'))
 
     return render_template('admin/cargar_producto.html')
+
 
 
 @admin.route('/admin/productos/listar')
@@ -113,27 +135,37 @@ def eliminar_producto(id):
 @admin.route('/carrito/agregar/<int:producto_id>', methods=['POST'])
 def agregar_al_carrito(producto_id):
     carrito = session.get('carrito', {})
+    pid = str(producto_id)
 
-    producto_id_str = str(producto_id)
-    try:
-        cantidad = int(request.form.get('cantidad', 1))
-    except ValueError:
-        cantidad = 1
+    cantidad = int(request.form.get('cantidad', 1))
+    talle = request.form.get('talle')
+    color = request.form.get('color')
 
-    # Sumar a lo que ya haya
-    carrito[producto_id_str] = carrito.get(producto_id_str, 0) + cantidad
+    if pid not in carrito:
+        carrito[pid] = []
+
+    # Si ya existe la misma variante (talle + color), sumamos cantidad
+    for item in carrito[pid]:
+        if item.get('talle') == talle and item.get('color') == color:
+            item['cantidad'] += cantidad
+            break
+    else:
+        carrito[pid].append({"cantidad": cantidad, "talle": talle, "color": color})
 
     session['carrito'] = carrito
     flash(f'Se agregaron {cantidad} unidades al carrito', 'success')
     return redirect(url_for('main.index'))
 
-@admin.route('/carrito/eliminar/<int:producto_id>', methods=['POST'])
-def eliminar_del_carrito(producto_id):
-    carrito = session.get('carrito', {})
 
-    producto_id_str = str(producto_id)
-    if producto_id_str in carrito:
-        del carrito[producto_id_str]
+@admin.route('/carrito/eliminar/<int:producto_id>/<int:idx>', methods=['POST'])
+def eliminar_del_carrito(producto_id, idx):
+    carrito = session.get('carrito', {})
+    pid = str(producto_id)
+
+    if pid in carrito and 0 <= idx < len(carrito[pid]):
+        carrito[pid].pop(idx)
+        if not carrito[pid]:
+            del carrito[pid]
         session['carrito'] = carrito
         flash('Producto eliminado del carrito.', 'success')
     else:
@@ -148,18 +180,26 @@ def ver_carrito():
     productos = []
     total = 0
 
-    for producto_id_str, cantidad in carrito.items():
+    for producto_id_str, items in carrito.items():
         producto = Producto.query.get(int(producto_id_str))
         if producto:
-            subtotal = producto.precio * cantidad
-            productos.append({
-                'producto': producto,
-                'cantidad': cantidad,
-                'subtotal': subtotal
-            })
-            total += subtotal
+            for idx, item in enumerate(items):
+                cantidad = item['cantidad']
+                talle = item.get('talle', '-') or '-'
+                color = item.get('color', '-') or '-'
+                subtotal = producto.precio * cantidad
+                productos.append({
+                    'producto': producto,
+                    'cantidad': cantidad,
+                    'talle': talle,
+                    'color': color,
+                    'subtotal': subtotal,
+                    'variante_index': idx
+                })
+                total += subtotal
 
     return render_template('carrito.html', productos=productos, total=total)
+
 
 @admin.route('/carrito/confirmar', methods=['POST'])
 def confirmar_compra():
@@ -177,33 +217,41 @@ def confirmar_compra():
 
     total_pedido = 0
 
-    for producto_id_str, cantidad in carrito.items():
+    for producto_id_str, items in carrito.items():
         producto = Producto.query.get(int(producto_id_str))
         if not producto:
             flash("Producto no encontrado.", "error")
             return redirect(url_for('admin.ver_carrito'))
 
-        if producto.stock < cantidad:
-            flash(f"No hay suficiente stock para {producto.nombre}.", "error")
-            return redirect(url_for('admin.ver_carrito'))
+        for item in items:  # iteramos cada variante
+            cantidad = item['cantidad']
+            talle = item.get('talle', '-') or '-'
+            color = item.get('color', '-') or '-'
 
-        producto.stock -= cantidad
-        subtotal = producto.precio * cantidad
-        total_pedido += subtotal
+            if producto.stock < cantidad:
+                flash(f"No hay suficiente stock para {producto.nombre} ({talle}, {color}).", "error")
+                return redirect(url_for('admin.ver_carrito'))
 
-        item = ItemPedido(
-            pedido_id=nuevo_pedido.id,
-            producto_id=producto.id,
-            cantidad=cantidad
-        )
-        db.session.add(item)
+            producto.stock -= cantidad
+            subtotal = producto.precio * cantidad
+            total_pedido += subtotal
 
-    nuevo_pedido.total = total_pedido  # Guardás el total en el Pedido
+            item_pedido = ItemPedido(
+                pedido_id=nuevo_pedido.id,
+                producto_id=producto.id,
+                cantidad=cantidad,
+                # talle=talle,  # si agregás columna talle
+                # color=color   # si agregás columna color
+            )
+            db.session.add(item_pedido)
 
+    nuevo_pedido.total = total_pedido
     db.session.commit()
+
     session['carrito'] = {}
     flash("¡Pedido realizado con éxito!", "success")
     return redirect(url_for('main.index'))
+
 
 
 @admin.route('/producto/<int:id>')

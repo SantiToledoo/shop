@@ -3,6 +3,7 @@ from flask import Blueprint, render_template,session,redirect,render_template, r
 from app.models.producto import Producto
 from flask import flash
 
+
 main = Blueprint('main', __name__)
 
 @main.route('/')

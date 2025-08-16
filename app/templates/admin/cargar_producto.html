@@ -34,6 +34,23 @@
                     <label class="input-label" for="imagen">Imagen del Producto</label>
                     <input type="file" name="imagen" id="imagen" accept="image/*" class="input-file" required>
                 </div>
+                <div class="input-group">
+                    <input type="checkbox" id="usa_talle" name="usa_talle" value="1" onchange="toggleVariantSection('talles-section', this.checked)">
+                    <label for="usa_talle">Habilitar Talles</label>
+                </div>
+                <div id="talles-section" style="display:none;">
+                    <div id="talles-container"></div>
+                    <button type="button" onclick="addVariant('talles-container', 'talles[]')">Agregar talle</button>
+                </div>
+
+                <div class="input-group">
+                    <input type="checkbox" id="usa_color" name="usa_color" value="1" onchange="toggleVariantSection('colores-section', this.checked)">
+                    <label for="usa_color">Habilitar Colores</label>
+                </div>
+                <div id="colores-section" style="display:none;">
+                    <div id="colores-container"></div>
+                    <button type="button" onclick="addVariant('colores-container', 'colores[]')">Agregar color</button>
+                </div>
             </div>
 
             <div class="form-actions">
@@ -69,4 +86,19 @@
     {% endif %}
     {% endwith %}
 </div>
+<script>
+function toggleVariantSection(id, isChecked) {
+    document.getElementById(id).style.display = isChecked ? 'block' : 'none';
+}
+
+function addVariant(containerId, name) {
+    const container = document.getElementById(containerId);
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.name = name;
+    input.placeholder = 'Ingrese valor';
+    container.appendChild(input);
+}
+</script>
+
 {% endblock %}

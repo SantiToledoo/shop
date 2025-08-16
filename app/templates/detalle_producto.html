@@ -34,8 +34,13 @@
                 <p class="product-description-detail">{{ producto.descripcion }}</p>
             </div>
 
+            {% set talles = producto.variantes | selectattr("tipo", "equalto", "talle") | list %}
+            {% set colores = producto.variantes | selectattr("tipo", "equalto", "color") | list %}
+
             {% if producto.stock > 0 %}
                 <form action="{{ url_for('admin.agregar_al_carrito', producto_id=producto.id) }}" method="POST" class="add-to-cart-form">
+
+                    <!-- Cantidad -->
                     <div class="quantity-section">
                         <label for="cantidad" class="quantity-label">Cantidad:</label>
                         <div class="quantity-controls">
@@ -44,6 +49,33 @@
                             <button type="button" class="quantity-btn" onclick="increaseQuantity()">+</button>
                         </div>
                     </div>
+
+                    <!-- Talle -->
+                    {% if talles %}
+                    <div class="input-group">
+                        <label for="talle">Talle:</label>
+                        <select name="talle" id="talle" required>
+                            <option value="">Seleccione</option>
+                            {% for t in talles %}
+                                <option value="{{ t.valor }}">{{ t.valor }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Color -->
+                    {% if colores %}
+                    <div class="input-group">
+                        <label for="color">Color:</label>
+                        <select name="color" id="color" required>
+                            <option value="">Seleccione</option>
+                            {% for c in colores %}
+                                <option value="{{ c.valor }}">{{ c.valor }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
                     <button type="submit" class="btn-primary btn-large btn-full add-to-cart-btn">
                         Agregar al Carrito
                     </button>
@@ -55,6 +87,7 @@
                     </button>
                 </div>
             {% endif %}
+
         </div>
     </div>
 
@@ -82,22 +115,18 @@
 </div>
 
 <script>
-    function increaseQuantity() {
-        const input = document.getElementById('cantidad');
-        const max = parseInt(input.getAttribute('max'));
-        const current = parseInt(input.value);
-        if (current < max) {
-            input.value = current + 1;
-        }
-    }
+function increaseQuantity() {
+    const input = document.getElementById('cantidad');
+    const max = parseInt(input.getAttribute('max'));
+    const current = parseInt(input.value);
+    if (current < max) input.value = current + 1;
+}
 
-    function decreaseQuantity() {
-        const input = document.getElementById('cantidad');
-        const min = parseInt(input.getAttribute('min'));
-        const current = parseInt(input.value);
-        if (current > min) {
-            input.value = current - 1;
-        }
-    }
+function decreaseQuantity() {
+    const input = document.getElementById('cantidad');
+    const min = parseInt(input.getAttribute('min'));
+    const current = parseInt(input.value);
+    if (current > min) input.value = current - 1;
+}
 </script>
 {% endblock %}

@@ -8,5 +8,9 @@ class Producto(db.Model):
     imagen_url = db.Column(db.String(255))
     stock = db.Column(db.Integer, default=0)
 
+    usa_talle = db.Column(db.Boolean, default=False)
+    usa_color = db.Column(db.Boolean, default=False)
+
     def __repr__(self):
         return f'<Producto {self.nombre}>'
+
