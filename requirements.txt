@@ -4,3 +4,4 @@ Flask-Login
 python-dotenv
 flask_bcrypt
 flask-migrate
+mercadopago

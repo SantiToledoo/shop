@@ -62,10 +62,25 @@
 
            <div class="cart-summary">
                 <h3 class="total-amount">Total: ${{ total }}</h3>
-                    <form action="{{ url_for('admin.confirmar_compra') }}" method="POST" class="checkout-form">
-                        <input type="hidden" name="total" value="{{ total }}">
-                        <button type="submit" class="btn-primary btn-large">Confirmar Compra</button>
-                    </form>
+                <h5>Elegí tu forma de pago:</h5>
+
+                <!-- Mercado Pago -->
+                <form action="{{ url_for('admin.pagar_mercado_pago') }}" method="POST">
+                    <input type="hidden" name="total" value="{{ total }}">
+                    <button type="submit" class="btn btn-primary">Pagar con Mercado Pago</button>
+                </form>
+
+                <!-- Transferencia Bancaria -->
+                <form action="{{ url_for('admin.pagar_transferencia') }}" method="POST">
+                    <input type="hidden" name="total" value="{{ total }}">
+                    <button type="submit" class="btn btn-secondary">Transferencia Bancaria</button>
+                </form>
+
+                <!-- Ir al Local -->
+                <form action="{{ url_for('admin.pagar_en_local') }}" method="POST">
+                    <input type="hidden" name="total" value="{{ total }}">
+                    <button type="submit" class="btn btn-success">Ir al Local</button>
+                </form>
             </div>
         </div>
     {% else %}

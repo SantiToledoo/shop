@@ -9,11 +9,14 @@ from app.models.producto import Producto
 from app.models.pedidos import Pedido
 from app.models.item_pedido import ItemPedido
 from app.models.productovariante import ProductoVariante
+import mercadopago
 
 
 admin = Blueprint('admin', __name__)
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'static', 'img')
+# Inicializá el SDK con tu Access Token
+sdk = mercadopago.SDK("APP_USR-2242152984017973-101211-f47713496164e7ae22a6df827bbd9e75-2919985747")
 
 @admin.route('/admin/productos', methods=['GET', 'POST'])
 @login_required
@@ -294,3 +297,74 @@ def marcar_rechazado(pedido_id):
 
     flash("Pedido rechazado y stock restaurado correctamente.", "success")
     return redirect(url_for('admin.ver_pedidos'))
+
+
+@admin.route('/pagar_mercado_pago', methods=['POST'])
+def pagar_mercado_pago():
+    total = request.form['total']
+
+    preference_data = {
+        "items": [
+            {
+                "title": "Compra en tu tienda",
+                "quantity": 1,
+                "unit_price": float(total)
+            }
+        ],
+        "back_urls": {
+            "success": "http://localhost:5000/pago_exitoso",
+            "failure": "http://localhost:5000/pago_fallido",
+            "pending": "http://localhost:5000/pago_pendiente"
+        }
+    
+    }
+
+
+    # Usar el link de sandbox para pruebas
+    preference_response = sdk.preference().create(preference_data)
+    print("🔍 Respuesta de Mercado Pago:", preference_response)
+
+    response_data = preference_response.get("response", {})
+
+    link_de_pago = response_data.get("sandbox_init_point") or response_data.get("init_point")
+
+    if link_de_pago:
+        return redirect(link_de_pago)
+    else:
+        flash("Hubo un problema al generar el link de pago.", "danger")
+        return redirect(url_for('admin.ver_carrito'))
+
+
+
+
+@admin.route('/pagar_transferencia', methods=['POST'])
+def pagar_transferencia():
+    total = request.form['total']
+    flash('Datos para transferencia: CBU 000000000000000000001, Alias: TUEMPRESA.PAGO', 'info')
+    return redirect(url_for('admin.ver_carrito'))
+
+
+@admin.route('/pagar_en_local', methods=['POST'])
+def pagar_en_local():
+    flash('Podés pasar por el local a retirar y pagar. Dirección: Calle Falsa 123, San Miguel.', 'info')
+    return redirect(url_for('admin.ver_carrito'))
+
+
+
+@admin.route('/pago_exitoso')
+def pago_exitoso():
+    flash("¡Pago aprobado! Gracias por tu compra.", "success")
+    return redirect(url_for('admin.ver_carrito'))
+
+
+@admin.route('/pago_fallido')
+def pago_fallido():
+    flash("Hubo un problema con el pago. Intentá nuevamente.", "danger")
+    return redirect(url_for('admin.ver_carrito'))
+
+
+@admin.route('/pago_pendiente')
+def pago_pendiente():
+    flash("Tu pago está pendiente. Te avisaremos cuando se confirme.", "warning")
+    return redirect(url_for('admin.ver_carrito'))
+
