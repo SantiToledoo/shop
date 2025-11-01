@@ -61,28 +61,207 @@
             </div>
 
            <div class="cart-summary">
-                <h3 class="total-amount">Total: ${{ total }}</h3>
-                <h5>Elegí tu forma de pago:</h5>
+                <h3 class="total-amount">Subtotal: $<span id="subtotal">{{ total }}</span></h3>
+                
+                <!-- Sección mejorada para preguntar si quiere envío -->
+                <div class="shipping-section" style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
+                    <h5 style="margin-bottom: 10px;">¿Necesitás envío?</h5>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="shipping" value="si" id="shipping-yes" style="margin-right: 5px;">
+                            Sí, con envío ($<span id="shipping-cost">1500</span>)
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="shipping" value="no" id="shipping-no" checked style="margin-right: 5px;">
+                            No, retiro en local
+                        </label>
+                    </div>
+                    <p id="shipping-notice" style="display: none; color: #666; font-size: 14px; margin-top: 10px;">
+                        ⚠️ El envío solo está disponible con pago por Mercado Pago
+                    </p>
 
-                <!-- Mercado Pago -->
-                <form action="{{ url_for('admin.pagar_mercado_pago') }}" method="POST">
-                    <input type="hidden" name="total" value="{{ total }}">
+                    <!-- Formulario de datos de envío que aparece cuando se selecciona "Con envío" -->
+                    <div id="shipping-form" style="display: none; margin-top: 15px; padding: 15px; background-color: #fff; border-radius: 6px; border: 1px solid #e0e0e0;">
+                        <h6 style="margin-bottom: 15px; color: #2c3e50;">Datos de envío</h6>
+                        <div style="display: grid; gap: 12px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Nombre completo *</label>
+                                <input type="text" id="shipping-name" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Dirección completa *</label>
+                                <input type="text" id="shipping-address" placeholder="Calle, número, piso, depto" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Ciudad *</label>
+                                    <input type="text" id="shipping-city" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Código Postal *</label>
+                                    <input type="text" id="shipping-postal" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                                </div>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Teléfono *</label>
+                                <input type="tel" id="shipping-phone" placeholder="Ej: 11 1234-5678" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; font-size: 14px; color: #555;">Notas adicionales (opcional)</label>
+                                <textarea id="shipping-notes" rows="2" placeholder="Ej: Timbre roto, entregar por portería" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: vertical;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="total-amount" style="font-size: 24px; color: #2c3e50;">Total: $<span id="total-amount">{{ total }}</span></h3>
+
+                <h5 style="margin-top: 20px;">Elegí tu forma de pago:</h5>
+
+                <!-- Mercado Pago con soporte de envío y datos de envío -->
+                <form action="{{ url_for('admin.pagar_mercado_pago') }}" method="POST" id="form-mercado-pago">
+                    <input type="hidden" name="total" id="mp-total" value="{{ total }}">
+                    <input type="hidden" name="con_envio" id="mp-con-envio" value="no">
+                    <input type="hidden" name="shipping_name" id="mp-shipping-name" value="">
+                    <input type="hidden" name="shipping_address" id="mp-shipping-address" value="">
+                    <input type="hidden" name="shipping_city" id="mp-shipping-city" value="">
+                    <input type="hidden" name="shipping_postal" id="mp-shipping-postal" value="">
+                    <input type="hidden" name="shipping_phone" id="mp-shipping-phone" value="">
+                    <input type="hidden" name="shipping_notes" id="mp-shipping-notes" value="">
                     <button type="submit" class="btn btn-primary">Pagar con Mercado Pago</button>
                 </form>
 
-                <!-- Transferencia Bancaria -->
-                <form action="{{ url_for('admin.pagar_transferencia') }}" method="POST">
+                <!-- Transferencia Bancaria sin envío -->
+                <form action="{{ url_for('admin.pagar_transferencia') }}" method="POST" id="form-transferencia">
                     <input type="hidden" name="total" value="{{ total }}">
-                    <button type="submit" class="btn btn-secondary">Transferencia Bancaria</button>
+                    <input type="hidden" name="con_envio" value="no">
+                    <button type="submit" class="btn btn-secondary">Transferencia Bancaria (Solo retiro en local)</button>
                 </form>
 
-                <!-- Ir al Local -->
-                <form action="{{ url_for('admin.pagar_en_local') }}" method="POST">
+                <!-- Ir al Local sin envío -->
+                <form action="{{ url_for('admin.pagar_en_local') }}" method="POST" id="form-local">
                     <input type="hidden" name="total" value="{{ total }}">
-                    <button type="submit" class="btn btn-success">Ir al Local</button>
+                    <input type="hidden" name="con_envio" value="no">
+                    <button type="submit" class="btn btn-success">Pagar en Local (Solo retiro en local)</button>
                 </form>
             </div>
         </div>
+
+        <!-- Script mejorado para manejar la lógica de envío, datos de envío y forma de pago -->
+        <script>
+            const subtotal = {{ total }};
+            const shippingCost = 1500;
+            
+            const shippingYes = document.getElementById('shipping-yes');
+            const shippingNo = document.getElementById('shipping-no');
+            const totalAmountSpan = document.getElementById('total-amount');
+            const shippingNotice = document.getElementById('shipping-notice');
+            const shippingForm = document.getElementById('shipping-form');
+            const mpTotal = document.getElementById('mp-total');
+            const mpConEnvio = document.getElementById('mp-con-envio');
+            
+            const formMercadoPago = document.getElementById('form-mercado-pago');
+            const formTransferencia = document.getElementById('form-transferencia');
+            const formLocal = document.getElementById('form-local');
+
+            // Campos de envío
+            const shippingName = document.getElementById('shipping-name');
+            const shippingAddress = document.getElementById('shipping-address');
+            const shippingCity = document.getElementById('shipping-city');
+            const shippingPostal = document.getElementById('shipping-postal');
+            const shippingPhone = document.getElementById('shipping-phone');
+            const shippingNotes = document.getElementById('shipping-notes');
+
+            function updateTotal() {
+                const wantsShipping = shippingYes.checked;
+                let newTotal = subtotal;
+                
+                if (wantsShipping) {
+                    newTotal += shippingCost;
+                    shippingNotice.style.display = 'block';
+                    shippingForm.style.display = 'block';
+                    mpConEnvio.value = 'si';
+                } else {
+                    shippingNotice.style.display = 'none';
+                    shippingForm.style.display = 'none';
+                    mpConEnvio.value = 'no';
+                    // Limpiar campos de envío cuando no se necesita
+                    clearShippingFields();
+                }
+                
+                totalAmountSpan.textContent = newTotal;
+                mpTotal.value = newTotal;
+            }
+
+            function clearShippingFields() {
+                shippingName.value = '';
+                shippingAddress.value = '';
+                shippingCity.value = '';
+                shippingPostal.value = '';
+                shippingPhone.value = '';
+                shippingNotes.value = '';
+            }
+
+            function validateShippingFields() {
+                if (!shippingYes.checked) return true;
+                
+                const fields = [
+                    { element: shippingName, name: 'Nombre completo' },
+                    { element: shippingAddress, name: 'Dirección' },
+                    { element: shippingCity, name: 'Ciudad' },
+                    { element: shippingPostal, name: 'Código Postal' },
+                    { element: shippingPhone, name: 'Teléfono' }
+                ];
+
+                for (const field of fields) {
+                    if (!field.element.value.trim()) {
+                        alert(`Por favor, completá el campo: ${field.name}`);
+                        field.element.focus();
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function updateHiddenShippingFields() {
+                document.getElementById('mp-shipping-name').value = shippingName.value;
+                document.getElementById('mp-shipping-address').value = shippingAddress.value;
+                document.getElementById('mp-shipping-city').value = shippingCity.value;
+                document.getElementById('mp-shipping-postal').value = shippingPostal.value;
+                document.getElementById('mp-shipping-phone').value = shippingPhone.value;
+                document.getElementById('mp-shipping-notes').value = shippingNotes.value;
+            }
+
+            // Validar formulario de Mercado Pago antes de enviar
+            formMercadoPago.addEventListener('submit', function(e) {
+                if (!validateShippingFields()) {
+                    e.preventDefault();
+                    return;
+                }
+                updateHiddenShippingFields();
+            });
+
+            // Prevenir envío si se selecciona envío con métodos que no lo soportan
+            formTransferencia.addEventListener('submit', function(e) {
+                if (shippingYes.checked) {
+                    e.preventDefault();
+                    alert('El envío solo está disponible con Mercado Pago. Por favor, selecciona "No, retiro en local" o elige Mercado Pago como forma de pago.');
+                }
+            });
+
+            formLocal.addEventListener('submit', function(e) {
+                if (shippingYes.checked) {
+                    e.preventDefault();
+                    alert('El envío solo está disponible con Mercado Pago. Por favor, selecciona "No, retiro en local" o elige Mercado Pago como forma de pago.');
+                }
+            });
+
+            shippingYes.addEventListener('change', updateTotal);
+            shippingNo.addEventListener('change', updateTotal);
+            
+            // Inicializar
+            updateTotal();
+        </script>
     {% else %}
         <div class="empty-cart">
             <p class="empty-message">El carrito está vacío</p>

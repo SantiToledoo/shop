@@ -248,6 +248,12 @@ def confirmar_compra():
             )
             db.session.add(item_pedido)
 
+    envio_data = session.get('envio')
+    if envio_data:
+        envio = envio(pedido_id=nuevo_pedido.id, **envio_data)
+        db.session.add(envio)
+        total_pedido += envio_data['costo_envio']
+
     nuevo_pedido.total = total_pedido
     db.session.commit()
 
@@ -367,4 +373,27 @@ def pago_fallido():
 def pago_pendiente():
     flash("Tu pago está pendiente. Te avisaremos cuando se confirme.", "warning")
     return redirect(url_for('admin.ver_carrito'))
+
+@admin.route('/envio', methods=['GET', 'POST'])
+def confirmar_envio():
+    from app import db
+
+    if request.method == 'POST':
+        datos_envio = {
+            "nombre": request.form['nombre'],
+            "direccion": request.form['direccion'],
+            "localidad": request.form['localidad'],
+            "provincia": request.form['provincia'],
+            "codigo_postal": request.form['codigo_postal'],
+            "telefono": request.form.get('telefono'),
+            "metodo_envio": request.form['metodo_envio'],
+            "costo_envio": float(request.form['costo_envio'])
+        }
+
+        session['envio'] = datos_envio  # lo guardamos para usar al confirmar pedido
+
+        flash("Datos de envío guardados. Ahora podés continuar con el pago.", "success")
+        return redirect(url_for('admin.ver_carrito'))  # o al checkout
+
+    return render_template('envio.html')
 
